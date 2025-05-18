@@ -1,0 +1,476 @@
+import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox as mess
+import tkinter.simpledialog as tsd
+import cv2,os
+import csv
+import numpy as np
+from PIL import Image
+import pandas as pd
+import datetime
+import time
+
+# ✅ Initialize Tkinter main window and entry fields
+root = tk.Tk()
+root.title("Face Recognition Attendance System")
+
+txt = tk.Entry(root)
+txt.pack()
+
+txt2 = tk.Entry(root)
+txt2.pack()
+
+# ✅ Start the Tkinter event loop
+root.mainloop()
+
+def assure_path_exists(path):
+    dir = os.path.dirname(path)
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+def tick():
+    if window.winfo_exists() and clock.winfo_exists():  # Ensure main window exists
+        time_string = time.strftime('%H:%M:%S')
+        clock.config(text=time_string)
+        clock.after(200, tick)  # Schedule next tick
+
+def contact():
+    mess._show(title='Contact us', message="Please contact us on : 'shubhamkumar8180323@gmail.com' ")
+def check_haarcascadefile():
+    exists = os.path.isfile("haarcascade_frontalface_default.xml")
+    if exists:
+        pass
+    else:
+        mess._show(title='Some file missing', message='Please contact us for help')
+        window.destroy()
+def save_pass():
+    assure_path_exists("TrainingImageLabel/")
+    exists1 = os.path.isfile("TrainingImageLabel\psd.txt")
+    if exists1:
+        tf = open("TrainingImageLabel\psd.txt", "r")
+        key = tf.read()
+    else:
+        master.destroy()
+        new_pas = tsd.askstring('Old Password not found', 'Please enter a new password below', show='*')
+        if new_pas == None:
+            mess._show(title='No Password Entered', message='Password not set!! Please try again')
+        else:
+            tf = open("TrainingImageLabel\psd.txt", "w")
+            tf.write(new_pas)
+            mess._show(title='Password Registered', message='New password was registered successfully!!')
+            return
+    op = (old.get())
+    newp= (new.get())
+    nnewp = (nnew.get())
+    if (op == key):
+        if(newp == nnewp):
+            txf = open("TrainingImageLabel\psd.txt", "w")
+            txf.write(newp)
+        else:
+            mess._show(title='Error', message='Confirm new password again!!!')
+            return
+    else:
+        mess._show(title='Wrong Password', message='Please enter correct old password.')
+        return
+    mess._show(title='Password Changed', message='Password changed successfully!!')
+    master.destroy()
+def change_pass():
+    global master
+    master = tk.Tk()
+    master.geometry("400x160")
+    master.resizable(False,False)
+    master.title("Change Password")
+    master.configure(background="white")
+    lbl4 = tk.Label(master,text='Enter Old Password',bg='white',font=('times', 12, ' bold '))
+    lbl4.place(x=10,y=10)
+    global old
+    old=tk.Entry(master,width=25 ,fg="black",relief='solid',font=('times', 12, ' bold '),show='*')
+    old.place(x=180,y=10)
+    lbl5 = tk.Label(master, text='Enter New Password', bg='white', font=('times', 12, ' bold '))
+    lbl5.place(x=10, y=45)
+    global new
+    new = tk.Entry(master, width=25, fg="black",relief='solid', font=('times', 12, ' bold '),show='*')
+    new.place(x=180, y=45)
+    lbl6 = tk.Label(master, text='Confirm New Password', bg='white', font=('times', 12, ' bold '))
+    lbl6.place(x=10, y=80)
+    global nnew
+    nnew = tk.Entry(master, width=25, fg="black", relief='solid',font=('times', 12, ' bold '),show='*')
+    nnew.place(x=180, y=80)
+    cancel=tk.Button(master,text="Cancel", command=master.destroy ,fg="black"  ,bg="red" ,height=1,width=25 , activebackground = "white" ,font=('times', 10, ' bold '))
+    cancel.place(x=200, y=120)
+    save1 = tk.Button(master, text="Save", command=save_pass, fg="black", bg="#3ece48", height = 1,width=25, activebackground="white", font=('times', 10, ' bold '))
+    save1.place(x=10, y=120)
+    master.mainloop()
+def psw():
+    assure_path_exists("TrainingImageLabel/")
+    exists1 = os.path.isfile("TrainingImageLabel\psd.txt")
+    if exists1:
+        tf = open("TrainingImageLabel\psd.txt", "r")
+        key = tf.read()
+    else:
+        new_pas = tsd.askstring('Old Password not found', 'Please enter a new password below', show='*')
+        if new_pas == None:
+            mess._show(title='No Password Entered', message='Password not set!! Please try again')
+        else:
+            tf = open("TrainingImageLabel\psd.txt", "w")
+            tf.write(new_pas)
+            mess._show(title='Password Registered', message='New password was registered successfully!!')
+            return
+    password = tsd.askstring('Password', 'Enter Password', show='*')
+    if (password == key):
+        TrainImages()
+    elif (password == None):
+        pass
+    else:
+        mess._show(title='Wrong Password', message='You have entered wrong password')
+def clear():
+    txt.delete(0, 'end')
+    res = "1)Take Images  >>>  2)Save Profile"
+    message1.configure(text=res)
+def clear2():
+    txt2.delete(0, 'end')
+    res = "1)Take Images  >>>  2)Save Profile"
+    message1.configure(text=res)
+    # Initialize Tkinter root
+root = tk.Tk()  
+root.withdraw()  # Hide main window if not needed immediately
+def TakeImages():
+    global root, txt, txt2  
+
+    # ✅ Ensure Tkinter elements exist
+    if 'root' not in globals() or not root.winfo_exists():
+        mess.showerror("Error", "Application has been closed!")
+        return
+
+    try:
+        if 'txt' not in globals() or 'txt2' not in globals() or not txt.winfo_exists() or not txt2.winfo_exists():
+            mess.showerror("Error", "Entry fields are missing!")
+            return
+
+        Id = txt.get().strip()
+        name = txt2.get().strip()
+
+    except Exception as e:
+        mess.showerror("Error", f"An error occurred: {e}")
+        return
+
+    if not Id.isdigit():
+        mess.showerror("Error", "ID must be a number!")
+        return
+
+    if name.replace(" ", "").isalpha():
+        cam = cv2.VideoCapture(0)
+
+        if not cam.isOpened():
+            mess.showerror("Error", "Camera could not be opened. Please check your webcam!")
+            return
+
+        # ✅ Load Haarcascade file
+        haarcascade_path = "c:/Users/ASUS/OneDrive/Documents/Project/haarcascade_frontalface_default.xml"
+        face_cascade = cv2.CascadeClassifier(haarcascade_path)
+
+        sampleNum = 0
+
+        while True:
+            ret, img = cam.read()
+            if not ret:
+                mess.showerror("Error", "Failed to capture image. Please check your webcam!")
+                break
+
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+            # ✅ Detect faces
+            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(30, 30))
+
+            for (x, y, w, h) in faces:
+                cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+                # ✅ Save captured face images
+                sampleNum += 1
+                cv2.imwrite(f"TrainingImage/{name}.{Id}.{sampleNum}.jpg", gray[y:y + h, x:x + w])
+                cv2.imshow('Taking Images', img)
+
+            # ✅ Stop processing if the Tkinter window is closed
+            if not root.winfo_exists():
+                break
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            elif sampleNum > 100:
+                break
+
+        cam.release()
+        cv2.destroyAllWindows()
+
+        res = f"Images Taken for ID : {Id}"
+        row = [Id, name]
+
+        with open('StudentDetails/StudentDetails.csv', 'a+') as csvFile:
+            writer = csv.writer(csvFile)
+            writer.writerow(row)
+
+        message1.configure(text=res)
+
+    else:
+        message.configure(text="Enter Correct Name")
+
+def TrainImages():
+    check_haarcascadefile()
+    assure_path_exists("TrainingImageLabel/")
+    recognizer = cv2.face.LBPHFaceRecognizer_create()
+    harcascadePath = "haarcascade_frontalface_default.xml"
+    detector = cv2.CascadeClassifier(harcascadePath)
+    faces, ID = getImagesAndLabels("TrainingImage")
+    try:
+        recognizer.train(faces, np.array(ID))
+    except:
+        mess._show(title='No Registrations', message='Please Register someone first!!!')
+        return
+    recognizer.save("TrainingImageLabel/Trainner.yml")  # Use forward slash `/`
+    res = "Profile Saved Successfully"
+    message1.configure(text=res)
+    message.configure(text='Total Registrations till now  : ' + str(len(ID)))
+def getImagesAndLabels(path):
+    # get the path of all the files in the folder
+    imagePaths = [os.path.join(path, f) for f in os.listdir(path)]
+    # create empth face list
+    faces = []
+    # create empty ID list
+    Ids = []
+    # now looping through all the image paths and loading the Ids and the images
+    for imagePath in imagePaths:
+        # loading the image and converting it to gray scale
+        pilImage = Image.open(imagePath).convert('L')
+        # Now we are converting the PIL image into numpy array
+        imageNp = np.array(pilImage, 'uint8')
+        # getting the Id from the image
+        ID = int(os.path.split(imagePath)[-1].split(".")[1])
+        # extract the face from the training image sample
+        faces.append(imageNp)
+        Ids.append(ID)
+    return faces, Ids
+import cv2
+import pandas as pd
+import os
+import time
+import datetime
+import csv
+
+def TrackImages():
+    check_haarcascadefile()
+    assure_path_exists("Attendance/")
+    assure_path_exists("StudentDetails/")
+
+    for k in tv.get_children():
+        tv.delete(k)
+
+    recognizer = cv2.face.LBPHFaceRecognizer_create()
+    model_path = "TrainingImageLabel/Trainner.yml"
+
+    if not os.path.isfile(model_path):
+        mess._show(title='Data Missing', message='Please click on Save Profile to reset data!!')
+        return
+
+    recognizer.read(model_path)
+    print("Recognizer model loaded successfully!")
+
+    # Load Haarcascade face detector
+    harcascadePath = "haarcascade_frontalface_default.xml"
+    faceCascade = cv2.CascadeClassifier(harcascadePath)
+
+    if faceCascade.empty():
+        print("Error: Could not load Haarcascade XML file!")
+        return
+
+    cam = cv2.VideoCapture(0)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+    col_names = ['Id', 'Name', 'Date', 'Time']
+    student_file = "StudentDetails/StudentDetails.csv"
+
+    if not os.path.isfile(student_file):
+        mess._show(title='Details Missing', message='Student details are missing, please check!')
+        cam.release()
+        cv2.destroyAllWindows()
+        return
+
+    # Read student details
+    df = pd.read_csv(student_file)
+    df.columns = df.columns.str.strip()
+    
+    # Ensure correct column names
+    required_cols = {'SERIAL NO.', 'ID', 'NAME'}
+    if not required_cols.issubset(df.columns):
+        print("Error: CSV file is missing required columns!")
+        return
+    
+    df['SERIAL NO.'] = df['SERIAL NO.'].astype(str)
+    df['ID'] = df['ID'].astype(str)
+    df['NAME'] = df['NAME'].astype(str)
+
+    print("Student details loaded successfully!")
+
+    attendance_list = []  # Store attendance for multiple faces
+
+    while True:
+        ret, im = cam.read()
+        if not ret:
+            print("Error: Unable to capture image from camera")
+            break
+
+        gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        faces = faceCascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+
+        for (x, y, w, h) in faces:
+            cv2.rectangle(im, (x, y), (x + w, y + h), (225, 0, 0), 2)
+            serial, conf = recognizer.predict(gray[y:y + h, x:x + w])
+
+            if conf < 100:
+                ts = time.time()
+                date = datetime.datetime.fromtimestamp(ts).strftime('%d-%m-%Y')
+                timeStamp = datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
+
+                serial = str(serial)
+                filtered_data = df[df['SERIAL NO.'] == serial]
+
+                if not filtered_data.empty:
+                    ID = str(filtered_data.iloc[0]['ID'])
+                    Name = str(filtered_data.iloc[0]['NAME'])
+                else:
+                    ID = "Unknown"
+                    Name = "Unknown"
+
+                print(f"Predicted Serial: {serial} → Matched ID: {ID}, Name: {Name}")
+
+                attendance = [ID, Name, date, timeStamp]
+                attendance_list.append(attendance)
+
+                # Display ID & Name on image
+                display_text = f"{ID} - {Name}"
+                cv2.putText(im, display_text, (x, y - 10), font, 0.8, (255, 255, 255), 2)
+
+        cv2.imshow('Taking Attendance', im)
+
+        if cv2.waitKey(1) == ord('q'):
+            break
+
+    # Save attendance
+    if attendance_list:  # Ensure there's data before writing
+        ts = time.time()
+        date = datetime.datetime.fromtimestamp(ts).strftime('%d-%m-%Y')
+        filename = f"Attendance/Attendance_{date}.csv"
+
+        file_exists = os.path.isfile(filename)
+
+        with open(filename, 'a+', newline='') as csvFile:
+            writer = csv.writer(csvFile)
+            if not file_exists:
+                writer.writerow(col_names)  # Write headers if new file
+            writer.writerows(attendance_list)  # Write all attendance data
+
+    cam.release()
+    cv2.destroyAllWindows()
+
+
+global key
+key = ''
+ts = time.time()
+date = datetime.datetime.fromtimestamp(ts).strftime('%d-%m-%Y')
+day,month,year=date.split("-")
+mont={'01':'January',
+      '02':'February',
+      '03':'March',
+      '04':'April',
+      '05':'May',
+      '06':'June',
+      '07':'July',
+      '08':'August',
+      '09':'September',
+      '10':'October',
+      '11':'November',
+      '12':'December'
+      }
+window = tk.Tk()
+window.geometry("1280x720")
+window.resizable(True,False)
+window.title("Attendance System")
+window.configure(background='#262523')
+frame1 = tk.Frame(window, bg="#00aeff")
+frame1.place(relx=0.11, rely=0.17, relwidth=0.39, relheight=0.80)
+frame2 = tk.Frame(window, bg="#00aeff")
+frame2.place(relx=0.51, rely=0.17, relwidth=0.38, relheight=0.80)
+message3 = tk.Label(window, text="Face Recognition Based Attendance System" ,fg="white",bg="#262523" ,width=55 ,height=1,font=('times', 29, ' bold '))
+message3.place(x=10, y=10)
+frame3 = tk.Frame(window, bg="#c4c6ce")
+frame3.place(relx=0.52, rely=0.09, relwidth=0.09, relheight=0.07)
+frame4 = tk.Frame(window, bg="#c4c6ce")
+frame4.place(relx=0.36, rely=0.09, relwidth=0.16, relheight=0.07)
+datef = tk.Label(frame4, text = day+"-"+mont[month]+"-"+year+"  |  ", fg="orange",bg="#262523" ,width=55 ,height=1,font=('times', 22, ' bold '))
+datef.pack(fill='both',expand=1)
+clock = tk.Label(frame3,fg="orange",bg="#262523" ,width=55 ,height=1,font=('times', 22, ' bold '))
+clock.pack(fill='both',expand=1)
+tick()
+head2 = tk.Label(frame2, text="For New Registrations", fg="black",bg="#3ece48" ,font=('times', 17, ' bold ') )
+head2.grid(row=0,column=0)
+head1 = tk.Label(frame1, text="For Already Registered", fg="black",bg="#3ece48" ,font=('times', 17, ' bold ') )
+head1.place(x=0,y=0)
+lbl = tk.Label(frame2, text="Enter ID",width=20  ,height=1  ,fg="black"  ,bg="#00aeff" ,font=('times', 17, ' bold ') )
+lbl.place(x=80, y=55)
+txt = tk.Entry(frame2,width=32 ,fg="black",font=('times', 15, ' bold '))
+txt.place(x=30, y=88)
+lbl2 = tk.Label(frame2, text="Enter Name",width=20  ,fg="black"  ,bg="#00aeff" ,font=('times', 17, ' bold '))
+lbl2.place(x=80, y=140)
+txt2 = tk.Entry(frame2,width=32 ,fg="black",font=('times', 15, ' bold ')  )
+txt2.place(x=30, y=173)
+message1 = tk.Label(frame2, text="1)Take Images  >>>  2)Save Profile" ,bg="#00aeff" ,fg="black"  ,width=39 ,height=1, activebackground = "yellow" ,font=('times', 15, ' bold '))
+message1.place(x=7, y=230)
+message = tk.Label(frame2, text="" ,bg="#00aeff" ,fg="black"  ,width=39,height=1, activebackground = "yellow" ,font=('times', 16, ' bold '))
+message.place(x=7, y=450)
+lbl3 = tk.Label(frame1, text="Attendance",width=20  ,fg="black"  ,bg="#00aeff"  ,height=1 ,font=('times', 17, ' bold '))
+lbl3.place(x=100, y=115)
+res=0
+exists = os.path.isfile("StudentDetails\StudentDetails.csv")
+if exists:
+    with open("StudentDetails\StudentDetails.csv", 'r') as csvFile1:
+        reader1 = csv.reader(csvFile1)
+        for l in reader1:
+            res = res + 1
+    res = (res // 2) - 1
+    csvFile1.close()
+else:
+    res = 0
+message.configure(text='Total Registrations till now  : '+str(res))
+menubar = tk.Menu(window,relief='ridge')
+filemenu = tk.Menu(menubar,tearoff=0)
+filemenu.add_command(label='Change Password', command = change_pass)
+filemenu.add_command(label='Contact Us', command = contact)
+filemenu.add_command(label='Exit',command = window.destroy)
+menubar.add_cascade(label='Help',font=('times', 29, ' bold '),menu=filemenu)
+tv= ttk.Treeview(frame1,height =13,columns = ('name','date','time'))
+tv.column('#0',width=82)
+tv.column('name',width=130)
+tv.column('date',width=133)
+tv.column('time',width=133)
+tv.grid(row=2,column=0,padx=(0,0),pady=(150,0),columnspan=4)
+tv.heading('#0',text ='ID')
+tv.heading('name',text ='NAME')
+tv.heading('date',text ='DATE')
+tv.heading('time',text ='TIME')
+scroll=ttk.Scrollbar(frame1,orient='vertical',command=tv.yview)
+scroll.grid(row=2,column=4,padx=(0,100),pady=(150,0),sticky='ns')
+tv.configure(yscrollcommand=scroll.set)
+clearButton = tk.Button(frame2, text="Clear", command=clear  ,fg="black"  ,bg="#ea2a2a"  ,width=11 ,activebackground = "white" ,font=('times', 11, ' bold '))
+clearButton.place(x=335, y=86)
+clearButton2 = tk.Button(frame2, text="Clear", command=clear2  ,fg="black"  ,bg="#ea2a2a"  ,width=11 , activebackground = "white" ,font=('times', 11, ' bold '))
+clearButton2.place(x=335, y=172)
+takeImg = tk.Button(frame2, text="Take Images", command=TakeImages  ,fg="white"  ,bg="blue"  ,width=34  ,height=1, activebackground = "white" ,font=('times', 15, ' bold '))
+takeImg.place(x=30, y=300)
+trainImg = tk.Button(frame2, text="Save Profile", command=psw ,fg="white"  ,bg="blue"  ,width=34  ,height=1, activebackground = "white" ,font=('times', 15, ' bold '))
+trainImg.place(x=30, y=380)
+trackImg = tk.Button(frame1, text="Take Attendance", command=TrackImages  ,fg="black"  ,bg="yellow"  ,width=35  ,height=1, activebackground = "white" ,font=('times', 15, ' bold '))
+trackImg.place(x=30,y=50)
+quitWindow = tk.Button(frame1, text="Quit", command=window.destroy  ,fg="black"  ,bg="red"  ,width=35 ,height=1, activebackground = "white" ,font=('times', 15, ' bold '))
+quitWindow.place(x=30, y=450)
+window.configure(menu=menubar)
+window.mainloop()
+
+
